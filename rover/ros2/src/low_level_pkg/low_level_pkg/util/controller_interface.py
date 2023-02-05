@@ -27,7 +27,7 @@ class ControllerInterface:
         """
         self.node = parent_node
         self.logger = parent_node.get_logger()
-        self.controller_server_client = ActionClient(parent_node, # TODO )
+        self.controller_server_client = ActionClient(parent_node, FollowWaypoints, 'follow_waypoints')
 
     def call_action_client(self, frame_id: str, poses: List[PoseStamped], controller_id: str, goal_checker_id: str):
         """! Call the controller server action to follow a given path.
