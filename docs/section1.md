@@ -24,12 +24,32 @@ You will be working in the [`controller_interface.py`](../rover/ros2/src/low_lev
 ### [5.0%] Conceptual Questions
 Please solve the following questions:
 1. [0.5%] *What is the difference between an action, a topic and a service in ROS?*
+
+    A topic is a communication method in ROS where a node works as a publisher or subscriber (or both) publishing or subscribing at a constant rate to a message even if there is no other node that is subscribed or publishing the same message. Actions and Services on the other hand work similarly, both of them need a node that works as a server that executes an action and a node (or more of them ) that work as clients, the client makes a request (a goal in the case of actions) the the server and once the server is finished with the process it sends a response (a result in the case of actions) back to the client. The difference between the two is that services only take request and send responses while the actions take a goal, send a result but in addition can send feedback to the clients.
 1. [0.5%] *What is the use of the controller server within the context of Nav2?*
+
+    The controller server is in charge of handling the requests for the stack and host the plugin implementations. It takes the path and plugin names for controller, progress checker and goal checker to call the plugins.
 1. [0.5%] *What is the name and type of the controller server action?*
+
+    The controller server action name is `follow_waypoints` and the type of the action is `FollowWaypoints`
 1. [1.0%] *What are the fields of the controller server action and what is their purpose?*
+
+    The server action fields are:
+
+    * poses: The list of goal waypoints as PoseStamped messages
+    * missed_waypoints: The list of missed waypoints at the end of the action execution
+    * current_waypoint: The feedback of the action, the current waypoint that's being executed
 1. [0.5%] *Which costmap is used by the controller server?*
+
+    The costmap used by the controller server is an Occupancy Grid costmap published in the topic `/local_costmap/costmap` of type `nav_msgs/msg/OccupancyGrid`
 1. [1.0%] *Describe the controller, progress checker, and goal checker in the context of Nav2's controller server*
+
+    * Controller: In charge of the actual control of the robots drivetrain (Differential, Omnidirectional, Ackermann, etc.) based on the velocity commands
+    * Progress checker: In charge of checking if the robot has made progress to the goal (SimpleProgressChecker)
+    * Goal checker: In charge of checking if the robot is within the position and orientation tolerance to the goal
 1. [1.0%] *What is a future in the context of ROS asynchronous calls?*
+
+    A future contains the information of the task being executed (e.g. action result), and allows to take actions on the task (e.g. cancel the task)
 
 ### [5.0% Extra] Additional Questions
 Solve the following questions if you want to get some extra points:

@@ -91,8 +91,8 @@ def read_path() -> List[PoseStamped]:
     pose_msg = PoseStamped()
 
     for i in points["points"][0]["position"]:
-        pose_msg.pose.position.x = i["x"]
-        pose_msg.pose.position.y = i["y"]
+        pose_msg.pose.position.x = i["x"][0]
+        pose_msg.pose.position.y = i["y"][0]
 
         poses.append(pose_msg)
 
