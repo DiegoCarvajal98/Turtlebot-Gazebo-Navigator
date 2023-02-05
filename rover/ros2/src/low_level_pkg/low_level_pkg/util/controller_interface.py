@@ -5,7 +5,7 @@ from rclpy.action import ActionClient
 
 # Import the required ROS interfaces
 from nav_msgs.msg import Path
-from nav2_msgs.action import # TODO
+from nav2_msgs.action import FollowWaypoints
 from geometry_msgs.msg import PoseStamped
 
 # Import this to type the functions
