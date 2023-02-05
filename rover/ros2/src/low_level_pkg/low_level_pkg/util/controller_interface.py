@@ -42,7 +42,9 @@ class ControllerInterface:
             self.logger.error("Controller server is not available!")
             return
 
-        action_goal = # TODO
+        # FollowWaypoints goal message
+        action_goal = FollowWaypoints.Goal()
+        action_goal.poses = poses
 
         # Send the goal to the server
         future = self.controller_server_client.send_goal_async(action_goal)
