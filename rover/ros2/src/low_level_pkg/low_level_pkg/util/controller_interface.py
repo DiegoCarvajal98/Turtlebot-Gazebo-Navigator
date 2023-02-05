@@ -46,10 +46,15 @@ class ControllerInterface:
         action_goal = FollowWaypoints.Goal()
         action_goal.poses = poses
 
+        # Add frame_id and time stamp to pose messages
+        for i in range(len(action_goal.poses)):
+            action_goal.poses[i].header.frame_id = frame_id
+            action_goal.poses[i].header.stamp = self.node.get_clock().now().to_msg()
+
         # Send the goal to the server
         future = self.controller_server_client.send_goal_async(action_goal)
 
-        # Wait unitl the future completes
+        # Wait until the future completes
         rclpy.spin_until_future_complete(self.node, future)
 
         # Check if the goal was accepted
