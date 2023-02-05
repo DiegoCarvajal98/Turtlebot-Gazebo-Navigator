@@ -31,14 +31,22 @@ Please solve the following questions:
     The controller server is in charge of handling the requests for the stack and host the plugin implementations. It takes the path and plugin names for controller, progress checker and goal checker to call the plugins.
 1. [0.5%] *What is the name and type of the controller server action?*
 
-    The controller server action name is `follow_waypoints` and the type of the action is `FollowWaypoints`
+    The controller server action name is `follow_path` and the type of the action is `FollowPath`
 1. [1.0%] *What are the fields of the controller server action and what is their purpose?*
 
     The server action fields are:
 
-    * poses: The list of goal waypoints as PoseStamped messages
-    * missed_waypoints: The list of missed waypoints at the end of the action execution
-    * current_waypoint: The feedback of the action, the current waypoint that's being executed
+    *Goal*
+    * path: The path to be followed as a list of poses
+    * controller_id: Controller plugin
+    * goal_checker_id: Goal checker plugin
+
+    *Result*
+    * Empty message
+
+    *Feedback*
+    * distance_to_goal
+    * speed
 1. [0.5%] *Which costmap is used by the controller server?*
 
     The costmap used by the controller server is an Occupancy Grid costmap published in the topic `/local_costmap/costmap` of type `nav_msgs/msg/OccupancyGrid`
