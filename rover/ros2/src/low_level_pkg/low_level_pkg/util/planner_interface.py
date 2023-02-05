@@ -22,7 +22,7 @@ class PlannerInterface:
         """
         self.node = parent_node
         self.logger = parent_node.get_logger()
-        self.planner_server_client = ActionClient(parent_node, # TODO )
+        self.planner_server_client = ActionClient(parent_node, FollowWaypoints, "follow_waypoints")
 
     def call_action_client(self,  # TODO ):
         """! Call the planner server action to calculate a path.
