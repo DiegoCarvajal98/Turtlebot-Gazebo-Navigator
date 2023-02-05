@@ -4,7 +4,7 @@ from rclpy.node import Node
 from rclpy.action import ActionClient
 
 # Import the required ROS interfaces
-from nav2_msgs.action import # TODO
+from nav2_msgs.action import FollowWaypoints
 from geometry_msgs.msg import PoseStamped
 
 # These imports are only used in the tests
