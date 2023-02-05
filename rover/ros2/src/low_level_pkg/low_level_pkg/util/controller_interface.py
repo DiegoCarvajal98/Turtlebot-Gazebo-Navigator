@@ -5,7 +5,7 @@ from rclpy.action import ActionClient
 
 # Import the required ROS interfaces
 from nav_msgs.msg import Path
-from nav2_msgs.action import FollowWaypoints
+from nav2_msgs.action import FollowPath
 from geometry_msgs.msg import PoseStamped
 
 # Import this to type the functions
@@ -28,7 +28,7 @@ class ControllerInterface:
         """
         self.node = parent_node
         self.logger = parent_node.get_logger()
-        self.controller_server_client = ActionClient(parent_node, FollowWaypoints, 'follow_waypoints')
+        self.controller_server_client = ActionClient(parent_node, FollowPath, 'follow_path')
 
     def call_action_client(self, frame_id: str, poses: List[PoseStamped], controller_id: str, goal_checker_id: str):
         """! Call the controller server action to follow a given path.
@@ -44,13 +44,19 @@ class ControllerInterface:
             return
 
         # FollowWaypoints goal message
-        action_goal = FollowWaypoints.Goal()
-        action_goal.poses = poses
+        action_goal = FollowPath.Goal()
+        action_goal.path.poses = poses
 
         # Add frame_id and time stamp to pose messages
-        for i in range(len(action_goal.poses)):
-            action_goal.poses[i].header.frame_id = frame_id
-            action_goal.poses[i].header.stamp = self.node.get_clock().now().to_msg()
+        for i in range(len(action_goal.path.poses)):
+            action_goal.path.poses[i].header.stamp = self.node.get_clock().now().to_msg()
+            action_goal.path.poses[i].header.frame_id = frame_id
+
+        action_goal.path.header.frame_id = frame_id
+        action_goal.path.header.stamp = self.node.get_clock().now().to_msg()
+
+        action_goal.controller_id = controller_id
+        action_goal.goal_checker_id = goal_checker_id
 
         # Send the goal to the server
         future = self.controller_server_client.send_goal_async(action_goal)
