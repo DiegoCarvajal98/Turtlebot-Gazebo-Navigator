@@ -16,7 +16,7 @@ from typing import List
 from ament_index_python.packages import get_package_share_directory
 
 # Import the yaml package
-import yaml
+from parse_yaml import parse_preserving_duplicates
 
 class ControllerInterface:
 
@@ -76,7 +76,22 @@ def read_path() -> List[PoseStamped]:
     @return "str" name of the used goal checker.
     """
 
-    # TODO
+    frame_id = "map"
+
+    with open("/workspace/rover/ros2/src/tb_bringup/config/path.yaml") as f:
+        points = parse_preserving_duplicates(f)
+
+    poses = []
+    pose_msg = PoseStamped()
+
+    for i in points["points"][0]["position"]:
+        pose_msg.pose.position.x = i["x"]
+        pose_msg.pose.position.y = i["y"]
+
+        poses.append(pose_msg)
+
+    controller_id = "FollowPath"
+    goal_checker_id = "goal_checker"
 
     # Return the poses list
     return frame_id, poses, controller_id, goal_checker_id
