@@ -50,6 +50,8 @@ class PlannerInterface:
             action_goal.goals[i].header.frame_id = frame_id
 
         action_goal.start = start
+        action_goal.start.header.stamp = self.node.get_clock().now().to_msg()
+        action_goal.start.header.frame_id = frame_id
 
         action_goal.planner_id = planner_id
 
@@ -128,10 +130,10 @@ def test_planner_server(args=None):
     planner_server_interface = PlannerInterface(test_node)
 
     # Generate the goal, start, planner ID and user start values
-    # TODO
+    frame_id, goals, start, planner_id, use_start = read_waypoints()
 
     # Call the action client with the path
-    result = planner_server_interface.call_action_client(# TODO)
+    result = planner_server_interface.call_action_client(frame_id, goals, start, planner_id, use_start)
 
     # Kill them all
     rclpy.shutdown()
