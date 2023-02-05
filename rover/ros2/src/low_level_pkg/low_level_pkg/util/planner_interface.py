@@ -4,8 +4,11 @@ from rclpy.node import Node
 from rclpy.action import ActionClient
 
 # Import the required ROS interfaces
-from nav2_msgs.action import FollowWaypoints
+from nav2_msgs.action import ComputePathThroughPoses
 from geometry_msgs.msg import PoseStamped
+
+# Import this to type the functions
+from typing import List
 
 # These imports are only used in the tests
 # Import the get package function
@@ -22,9 +25,9 @@ class PlannerInterface:
         """
         self.node = parent_node
         self.logger = parent_node.get_logger()
-        self.planner_server_client = ActionClient(parent_node, FollowWaypoints, "follow_waypoints")
+        self.planner_server_client = ActionClient(parent_node, ComputePathThroughPoses, "compute_path_through_poses")
 
-    def call_action_client(self,  # TODO ):
+    def call_action_client(self,  poses: List[PoseStamped], start: PoseStamped, planner_id: str, use_start: bool):
         """! Call the planner server action to calculate a path.
 
         @param ...
