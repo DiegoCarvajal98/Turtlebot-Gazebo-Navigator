@@ -27,10 +27,14 @@ class PlannerInterface:
         self.logger = parent_node.get_logger()
         self.planner_server_client = ActionClient(parent_node, ComputePathThroughPoses, "compute_path_through_poses")
 
-    def call_action_client(self,  poses: List[PoseStamped], start: PoseStamped, planner_id: str, use_start: bool):
+    def call_action_client(self, frame_id: str, poses: List[PoseStamped], start: PoseStamped, planner_id: str, use_start: bool):
         """! Call the planner server action to calculate a path.
 
-        @param ...
+        @param poses "List[PoseStamped]" list of PoseStamped elements to plan the path
+        @param start "PoseStamped" PoseStamped element that defines the start of the path
+        @param planner_id "str" Planner to be used
+        @param use_start "bool" If set to False, start from the actual position of the robot,
+            else, start from the start param pose
 
         """
         # Check if controller server is not available
@@ -38,7 +42,18 @@ class PlannerInterface:
             self.logger.error("Planner server is not available!")
             return
 
-        action_goal = # TODO
+        # Goal definition
+        action_goal = ComputePathThroughPoses().Goal
+
+        for i in range(len(action_goal.goals)):
+            action_goal.goals[i].header.stamp = self.node.get_clock().now().to_msg()
+            action_goal.goals[i].header.frame_id = frame_id
+
+        action_goal.start = start
+
+        action_goal.planner_id = planner_id
+
+        action_goal.use_start = use_start
 
         # Send the goal to the server
         future = self.planner_server_client.send_goal_async(action_goal)
