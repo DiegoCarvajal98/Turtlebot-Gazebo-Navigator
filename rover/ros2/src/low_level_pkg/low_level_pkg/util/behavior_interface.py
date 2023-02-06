@@ -4,9 +4,10 @@ from rclpy.node import Node
 from rclpy.action import ActionClient
 
 # Import the required ROS interfaces
-from nav2_msgs.action import Wait, Spin
+from nav2_msgs.action import Wait, Spin, FollowPath, ComputePathToPose
 from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import String
+from std_srvs.srv import Trigger
 
 # Import the builtin 'Duration' message
 from builtin_interfaces.msg import Duration
@@ -30,7 +31,10 @@ class BehaviorInterface:
         self.logger = parent_node.get_logger()
         self.spin_server_client = ActionClient(parent_node, Spin, "spin")
         self.wait_server_client = ActionClient(parent_node, Wait, "wait")
+        self.controller_server_client = ActionClient(parent_node, FollowPath, 'follow_path')
+        self.planner_server_client = ActionClient(parent_node, ComputePathToPose, "compute_path_to_pose")
         self.audio_publisher = self.node.create_publisher(String, "/device/speaker/command", 10)
+        self.start_navigation_server = self.node.create_service(Trigger, "start_navigation", self.start_navigation_callback)
 
     def call_spin_action_client(self, target_yaw: float, time_allowance: Duration):
         """! Call the Spin behavior server client
@@ -95,6 +99,114 @@ class BehaviorInterface:
         rclpy.spin_until_future_complete(self.node, future)
 
         # Return the result
+        return future.result()
+    
+    def call_control_action_client(self, frame_id: str, poses: List[PoseStamped], controller_id: str, goal_checker_id: str):
+        """! Call the controller server action to follow a given path.
+        @param frame_id "str" name of the frame id in which the points are.
+        @param poses "List[PoseStamped]" list of PoseStamped elements that make
+            up the path.
+        @param controller_id "str" name of the controller that will be used.
+        @param goal_checker_id "str" name of the goal checker that will be used.
+        """
+        # Check if controller server is not available
+        if not self.controller_server_client.wait_for_server(timeout_sec=1.0):
+            self.logger.error("Controller server is not available!")
+            return
+
+        # FollowWaypoints goal message
+        action_goal = FollowPath.Goal()
+        action_goal.path.poses = poses
+
+        # Add frame_id and time stamp to pose messages
+        for i in range(len(action_goal.path.poses)):
+            action_goal.path.poses[i].header.stamp = self.node.get_clock().now().to_msg()
+            action_goal.path.poses[i].header.frame_id = frame_id
+
+        action_goal.path.header.frame_id = frame_id
+        action_goal.path.header.stamp = self.node.get_clock().now().to_msg()
+
+        action_goal.controller_id = controller_id
+        action_goal.goal_checker_id = goal_checker_id
+
+        # Send the goal to the server
+        future = self.controller_server_client.send_goal_async(action_goal)
+
+        # Wait until the future completes
+        rclpy.spin_until_future_complete(self.node, future)
+
+        # Check if the goal was accepted
+        if not future.result().accepted:
+            self.logger.error("The controller server goal was rejected by server!")
+            return
+
+        # Return the action result
+        future = future.result().get_result_async()
+
+        # Wait unitl the future completes
+        rclpy.spin_until_future_complete(self.node, future)
+
+        # Return the result
+        return future.result()
+    
+    def start_navigation_callback(self, req, resp):
+        
+        return resp
+    
+    def call_plan_action_client(self, frame_id: str, goal: PoseStamped, start: PoseStamped, planner_id: str, use_start: bool):
+        """! Call the planner server action to calculate a path.
+
+        @param goals "List[PoseStamped]" list of PoseStamped elements to plan the path
+        @param start "PoseStamped" PoseStamped element that defines the start of the path
+        @param planner_id "str" Planner to be used
+        @param use_start "bool" If set to False, start from the actual position of the robot,
+            else, start from the start param pose
+
+        """
+        # Check if controller server is not available
+        if not self.planner_server_client.wait_for_server(timeout_sec=1.0):
+            self.logger.error("Planner server is not available!")
+            return
+
+        # Goal definition
+        action_goal = ComputePathToPose.Goal()
+
+        action_goal.goal = goal
+
+        self.node.get_logger().info("%f, %f" % (goal.pose.position.x, goal.pose.position.y))
+
+        action_goal.goal.header.stamp = self.node.get_clock().now().to_msg()
+        action_goal.goal.header.frame_id = frame_id
+
+        action_goal.start = start
+
+        self.node.get_logger().info("%f, %f" % (start.pose.position.x, start.pose.position.y))
+
+        action_goal.start.header.stamp = self.node.get_clock().now().to_msg()
+        action_goal.start.header.frame_id = frame_id
+
+        action_goal.planner_id = planner_id
+
+        action_goal.use_start = use_start
+
+        # Send the goal to the server
+        future = self.planner_server_client.send_goal_async(action_goal)
+
+        # Wait until the future completes
+        rclpy.spin_until_future_complete(self.node, future)
+
+        # Check if the goal was accepted
+        if not future.result().accepted:
+            self.logger.error("The planner server goal was rejected by server!")
+            return
+
+        # Return the action result
+        future = future.result().get_result_async()
+
+        # Wait until the future completes
+        rclpy.spin_until_future_complete(self.node, future)
+
+        # Return the action result
         return future.result()
     
 def read_waypoints(site: str):
