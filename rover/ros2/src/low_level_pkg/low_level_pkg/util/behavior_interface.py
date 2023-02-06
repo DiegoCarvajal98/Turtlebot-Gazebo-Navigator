@@ -208,7 +208,7 @@ class BehaviorInterface:
             result = self.call_plan_action_client(goal, start, planner_id, use_start)
 
             # Execute path to restaurant
-            path = result.path
+            path = result().result.path
             controller_id = "FollowPath"
             goal_checker = "goal_checker"
 
@@ -226,7 +226,7 @@ class BehaviorInterface:
 
         return resp
     
-    def read_waypoints(site: str):
+    def read_waypoints(self, site: str):
         """! Function that generates a waypoints to test the planner server.
         @return "str" name of the frame for the path.
         @return "List[PoseStamped]" list of PoseStamped elements with the goal
@@ -280,9 +280,23 @@ def test_behavior_server(args=None):
 
     result = behavior_server_interface.call_spin_action_client(deg, time_allowance)
 
+    rclpy.spin(test_node)
+
     # Kill them all
+    rclpy.shutdown()
+
+def main(args=None):
+    rclpy.init(args=args)
+
+    node = Node("behavior_node")
+    behavior = BehaviorInterface(node)
+
+    rclpy.spin(behavior)
+
+    behavior.destroy_node()
     rclpy.shutdown()
 
 
 if __name__ == "__main__":
     test_behavior_server()
+    main()
