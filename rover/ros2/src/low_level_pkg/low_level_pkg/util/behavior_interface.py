@@ -6,6 +6,7 @@ from rclpy.action import ActionClient
 # Import the required ROS interfaces
 from nav2_msgs.action import Wait, Spin
 from geometry_msgs.msg import PoseStamped
+from std_msgs.msg import String
 
 # Import the builtin 'Duration' message
 from builtin_interfaces.msg import Duration
@@ -29,6 +30,7 @@ class BehaviorInterface:
         self.logger = parent_node.get_logger()
         self.spin_server_client = ActionClient(parent_node, Spin, "spin")
         self.wait_server_client = ActionClient(parent_node, Wait, "wait")
+        self.audio_publisher = self.node.create_publisher(String, "/device/speaker/command", 10)
 
     def call_spin_action_client(self, target_yaw: float, time_allowance: Duration):
         """! Call the Spin behavior server client
