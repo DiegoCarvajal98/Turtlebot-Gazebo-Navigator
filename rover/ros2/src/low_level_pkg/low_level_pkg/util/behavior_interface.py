@@ -23,7 +23,8 @@ class BehaviorInterface:
         """
         self.node = parent_node
         self.logger = parent_node.get_logger()
-        # TODO
+        self.spin_server_client = ActionClient(parent_node, Spin, "spin")
+        self.wait_server_client = ActionClient(parent_node, Wait, "wait")
 
     def call_spin_action_client(self, # TODO ):
         # TODO
