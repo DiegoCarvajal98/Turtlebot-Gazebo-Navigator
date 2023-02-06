@@ -5,6 +5,7 @@ from rclpy.action import ActionClient
 
 # Import the required ROS interfaces
 from nav2_msgs.action import Wait, Spin, FollowPath, ComputePathToPose
+from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import String
 from std_srvs.srv import Trigger
@@ -101,7 +102,7 @@ class BehaviorInterface:
         # Return the result
         return future.result()
     
-    def call_control_action_client(self, frame_id: str, poses: List[PoseStamped], controller_id: str, goal_checker_id: str):
+    def call_control_action_client(self, path: Path, controller_id: str, goal_checker_id: str):
         """! Call the controller server action to follow a given path.
         @param frame_id "str" name of the frame id in which the points are.
         @param poses "List[PoseStamped]" list of PoseStamped elements that make
@@ -116,15 +117,7 @@ class BehaviorInterface:
 
         # FollowWaypoints goal message
         action_goal = FollowPath.Goal()
-        action_goal.path.poses = poses
-
-        # Add frame_id and time stamp to pose messages
-        for i in range(len(action_goal.path.poses)):
-            action_goal.path.poses[i].header.stamp = self.node.get_clock().now().to_msg()
-            action_goal.path.poses[i].header.frame_id = frame_id
-
-        action_goal.path.header.frame_id = frame_id
-        action_goal.path.header.stamp = self.node.get_clock().now().to_msg()
+        action_goal.path = path
 
         action_goal.controller_id = controller_id
         action_goal.goal_checker_id = goal_checker_id
@@ -149,11 +142,7 @@ class BehaviorInterface:
         # Return the result
         return future.result()
     
-    def start_navigation_callback(self, req, resp):
-        
-        return resp
-    
-    def call_plan_action_client(self, frame_id: str, goal: PoseStamped, start: PoseStamped, planner_id: str, use_start: bool):
+    def call_plan_action_client(self, goal: PoseStamped, start: PoseStamped, planner_id: str, use_start: bool):
         """! Call the planner server action to calculate a path.
 
         @param goals "List[PoseStamped]" list of PoseStamped elements to plan the path
@@ -173,17 +162,11 @@ class BehaviorInterface:
 
         action_goal.goal = goal
 
-        self.node.get_logger().info("%f, %f" % (goal.pose.position.x, goal.pose.position.y))
-
-        action_goal.goal.header.stamp = self.node.get_clock().now().to_msg()
-        action_goal.goal.header.frame_id = frame_id
+        # self.node.get_logger().info("%f, %f" % (goal.pose.position.x, goal.pose.position.y))
 
         action_goal.start = start
 
-        self.node.get_logger().info("%f, %f" % (start.pose.position.x, start.pose.position.y))
-
-        action_goal.start.header.stamp = self.node.get_clock().now().to_msg()
-        action_goal.start.header.frame_id = frame_id
+        # self.node.get_logger().info("%f, %f" % (start.pose.position.x, start.pose.position.y))
 
         action_goal.planner_id = planner_id
 
@@ -209,35 +192,67 @@ class BehaviorInterface:
         # Return the action result
         return future.result()
     
-def read_waypoints(site: str):
-    """! Function that generates a waypoints to test the planner server.
-    @return "str" name of the frame for the path.
-    @return "List[PoseStamped]" list of PoseStamped elements with the goal
-        waypoints.
-    @return "PoseStamped" PoseStamped element with the start of the path
-    @return "str" name of the used path planner.
-    @return "bool" if set to False, use robot's current pose as path start.
-    """
+    def start_navigation_callback(self, req, resp):
+        sites = ["restaurant", "customer", "parking"]
 
-    frame_id = "map"
+        for i in sites:
+            goal, spin_angle, track_name, wait_time = self.read_waypoints(i)
 
-    with open("/workspace/rover/ros2/src/tb_bringup/config/waypoints.yaml") as f:
-        waypoints = yaml.safe_load(f)
-        waypoints = waypoints["waypoints"]
+            #Compute path to restaurant
+            goal.header.frame_id = "map"
+            goal.header.stamp = self.node.get_clock().now().to_msg()
+            start = PoseStamped()
+            planner_id = "GridBased"
+            use_start = False
 
-    pose = PoseStamped()
+            result = self.call_plan_action_client(goal, start, planner_id, use_start)
 
-    # Define goal pose
-    pose.pose.position.x = waypoints[site]["pose"]["x"]
-    pose.pose.position.y = waypoints[site]["pose"]["y"]
+            # Execute path to restaurant
+            path = result.path
+            controller_id = "FollowPath"
+            goal_checker = "goal_checker"
 
-    spin_angle = 0.0
+            result = self.call_control_action_client(path, controller_id, goal_checker)
 
-    track_name = waypoints[site]["track"]
+            # Publish audio
+            audio_msg = String()
+            audio_msg.data = track_name
+            self.audio_publisher.publish(audio_msg)
 
-    wait_time = waypoints[site]["wait_time"]
+            # Wait
+            time = Duration
+            time.sec = int(wait_time)
+            self.call_wait_action_client(time)
 
-    return pose, spin_angle, track_name, wait_time
+        return resp
+    
+    def read_waypoints(site: str):
+        """! Function that generates a waypoints to test the planner server.
+        @return "str" name of the frame for the path.
+        @return "List[PoseStamped]" list of PoseStamped elements with the goal
+            waypoints.
+        @return "PoseStamped" PoseStamped element with the start of the path
+        @return "str" name of the used path planner.
+        @return "bool" if set to False, use robot's current pose as path start.
+        """
+
+        with open("/workspace/rover/ros2/src/tb_bringup/config/waypoints.yaml") as f:
+            waypoints = yaml.safe_load(f)
+            waypoints = waypoints["waypoints"]
+
+        pose = PoseStamped()
+
+        # Define goal pose
+        pose.pose.position.x = waypoints[site]["pose"]["x"]
+        pose.pose.position.y = waypoints[site]["pose"]["y"]
+
+        spin_angle = 0.0
+
+        track_name = waypoints[site]["track"]
+
+        wait_time = waypoints[site]["wait_time"]
+
+        return pose, spin_angle, track_name, wait_time
 
 def test_behavior_server(args=None):
     
