@@ -4,7 +4,7 @@ from rclpy.node import Node
 from rclpy.action import ActionClient
 
 # Import the required ROS interfaces
-from nav2_msgs.action import ComputePathThroughPoses
+from nav2_msgs.action import ComputePathToPose
 from geometry_msgs.msg import PoseStamped
 
 # Import this to type the functions
@@ -25,9 +25,9 @@ class PlannerInterface:
         """
         self.node = parent_node
         self.logger = parent_node.get_logger()
-        self.planner_server_client = ActionClient(parent_node, ComputePathThroughPoses, "compute_path_through_poses")
+        self.planner_server_client = ActionClient(parent_node, ComputePathToPose, "compute_path_to_pose")
 
-    def call_action_client(self, frame_id: str, goals: List[PoseStamped], start: PoseStamped, planner_id: str, use_start: bool):
+    def call_action_client(self, frame_id: str, goal: PoseStamped, start: PoseStamped, planner_id: str, use_start: bool):
         """! Call the planner server action to calculate a path.
 
         @param goals "List[PoseStamped]" list of PoseStamped elements to plan the path
@@ -43,13 +43,19 @@ class PlannerInterface:
             return
 
         # Goal definition
-        action_goal = ComputePathThroughPoses().Goal
+        action_goal = ComputePathToPose.Goal()
 
-        for i in range(len(action_goal.goals)):
-            action_goal.goals[i].header.stamp = self.node.get_clock().now().to_msg()
-            action_goal.goals[i].header.frame_id = frame_id
+        action_goal.goal = goal
+
+        self.node.get_logger().info("%f, %f" % (goal.pose.position.x, goal.pose.position.y))
+
+        action_goal.goal.header.stamp = self.node.get_clock().now().to_msg()
+        action_goal.goal.header.frame_id = frame_id
 
         action_goal.start = start
+
+        self.node.get_logger().info("%f, %f" % (start.pose.position.x, start.pose.position.y))
+
         action_goal.start.header.stamp = self.node.get_clock().now().to_msg()
         action_goal.start.header.frame_id = frame_id
 
@@ -96,28 +102,24 @@ def read_waypoints():
 
     keys = list(waypoints.keys())
 
-    goals = []
-    pose_msg = PoseStamped()
+    goal = PoseStamped()
 
     # Define goal pose
-    pose_msg.pose.position.x = waypoints[keys[0]]["pose"]["x"]
-    pose_msg.pose.position.y = waypoints[keys[0]]["pose"]["y"]
+    goal.pose.position.x = waypoints[keys[0]]["pose"]["x"]
+    goal.pose.position.y = waypoints[keys[0]]["pose"]["y"]
 
-    goals.append(pose_msg)
-
+    start = PoseStamped()
     # Define start pose
-    pose_msg.pose.position.x = waypoints[keys[1]]["pose"]["x"]
-    pose_msg.pose.position.y = waypoints[keys[1]]["pose"]["y"]
-
-    start = pose_msg
+    start.pose.position.x = waypoints[keys[1]]["pose"]["x"]
+    start.pose.position.y = waypoints[keys[1]]["pose"]["y"]
 
     # Define planner_id
-    planner_id = "GridBased"
+    planner_id = ""
 
     # Use start pose for path planning
     use_start = True
 
-    return frame_id, goals, start, planner_id, use_start
+    return frame_id, goal, start, planner_id, use_start
 
 
 def test_planner_server(args=None):

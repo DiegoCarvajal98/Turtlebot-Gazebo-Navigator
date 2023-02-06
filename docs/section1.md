@@ -63,7 +63,13 @@ Please solve the following questions:
 Solve the following questions if you want to get some extra points:
 1. [1.0%] *Name two or three additional examples for controller servers:*
 1. [0.5%] *Which is the default controller that is used in Nav2's controller server?*
+
+    The default controller is the DWB Controller `dwb_core::DWBLocalPlanner`
 1. [0.5%] *Name three of the available controller plugins:*
+
+    * TEB Controller
+    * Regulated Pure Pursuit
+    * MPPI Controller
 1. [1.0%] *What should I modify if my speed control topic has the name `/kiwi/output_cmd` ?*
 1. [1.0%] *What is the purpose of using the `spin_until_future_complete` function in the `call_action_client`?*
 1. [1.0%] *Why are two (2) `future` instances used in the `call_action_client` function?*
@@ -90,10 +96,20 @@ You will be working in the [`planner_interface.py`](../rover/ros2/src/low_level_
 ### [5%] Conceptual Questions
 Please solve the following questions:
 1. [1.0%] *Which field of the planner server action should be set to use a specific planner?*
+
+    * To set a specific planner the `planner_id` field should be set
 1. [1.0%] *What is the information that is provided in the planner server action feedback?*
+
+    * The planner server action doesn't provide any feedback
 1. [1.0%] *Which costmap is used by the planner server?*
+
+    The costmap used by the planner server is an Occupancy Grid costmap published in the topic `/global_costmap/costmap` of type `nav_msgs/msg/OccupancyGrid`
 1. [1.0%] *Is sensor data being used by the planner server? If so, name a topic that is used*
+
+    The planner doesn't use sensors
 1. [1.0%] *Name three (3) planners that could be used by Nav2:*
+
+    
 
 ### [5% Extra] Additional Questions
 Solve the following questions if you want to get some extra points:
