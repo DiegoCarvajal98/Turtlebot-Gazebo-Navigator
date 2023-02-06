@@ -109,14 +109,28 @@ Please solve the following questions:
     The planner doesn't use sensors
 1. [1.0%] *Name three (3) planners that could be used by Nav2:*
 
-    
+    * NavFc Planner
+    * Smac Planner
+    * Theta Star Planner
 
 ### [5% Extra] Additional Questions
 Solve the following questions if you want to get some extra points:
 1. [2.0%] *Which is the error code for an invalid planner on a planner server action call?*
+
+    [ERROR][planner_server]: planner Hello is not a valid planner. Planner names are: GridBased 
 1. [1.0%] *What would happen if you plan a path toward a goal that is located outside of the costmap?*
+
+    [ERROR][planner_server]: worldToMap failed: mx,my: 400,240, size_x,size_y: 384,384 \
+    [WARN][planner_server]: The goal sent to the planner is off the global costmap. Planning will always fail to this goal. \
+    [WARN][planner_server]: GridBased: failed to create plan with tolerance 0.50. \
+    [WARN][planner_server]: Planning algorithm  failed to generate a valid path to (10.00, 2.00) \
+    [WARN][planner_server]: [compute_path_to_pose] [ActionServer] Aborting handle. 
 1. [1.0%] *What would happen if you plan a path toward a goal that is within the costmap but unreachable by the robot?*
+
+    The planner computes a plan to the goal's nearest point
 1. [1.0%] *What would happen if you plan a path toward a goal that is the same as the start pose:*
+
+    The plan computed only have the pose of the robot
 
 ## [20% + 5% Extra] Use behavior server to make the robot spin on its goal
 Before you get hands-on with this part, we recommend you to take a look to the following references:
