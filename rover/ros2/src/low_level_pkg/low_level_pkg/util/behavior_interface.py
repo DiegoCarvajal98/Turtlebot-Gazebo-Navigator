@@ -26,9 +26,37 @@ class BehaviorInterface:
         self.spin_server_client = ActionClient(parent_node, Spin, "spin")
         self.wait_server_client = ActionClient(parent_node, Wait, "wait")
 
-    def call_spin_action_client(self, # TODO ):
-        # TODO
-        pass
+    def call_spin_action_client(self, target_yaw: float, time_allowance: Duration):
+        """! Call the Spin behavior server client
+        @param target_yaw "float" Target angle to spin
+        @param time_allowance "Duration" Time to evoke the behavior, if it takes 
+            more is considered as a failure
+        """
+
+        # Define the Spin goal
+        spin_goal = Spin.Goal()
+        spin_goal.target_yaw = target_yaw
+        spin_goal.time_allowance = time_allowance
+
+        # Send the goal to the server
+        future = self.spin_server_client.send_goal_async(spin_goal)
+
+        # Wait until the future completes
+        rclpy.spin_until_future_complete(self.node, future)
+
+        # Check if the goal was accepted
+        if not future.result().accepted:
+            self.logger.error("The controller server goal was rejected by server!")
+            return
+
+        # Return the action result
+        future = future.result().get_result_async()
+
+        # Wait unitl the future completes
+        rclpy.spin_until_future_complete(self.node, future)
+
+        # Return the result
+        return future.result()
 
     def call_wait_action_client(self, # TODO ):
         # TODO
@@ -45,7 +73,7 @@ def test_behavior_server(args=None):
     behavior_server_interface = BehaviorInterface(test_node)
 
     # Call the action server to spin the robot. Turn 90 degrees to the right.
-    # TODO
+    
 
     # Call the action server to wait. Wait for two seconds
     # TODO
