@@ -5,6 +5,7 @@ from rclpy.action import ActionClient
 
 # Import the required ROS interfaces
 from nav2_msgs.action import Wait, Spin
+from geometry_msgs.msg import PoseStamped
 
 # Import the builtin 'Duration' message
 from builtin_interfaces.msg import Duration
@@ -13,6 +14,9 @@ import math
 
 # Import this to type the functions
 from typing import List
+
+# Import yaml reading module
+import yaml
 
 class BehaviorInterface:
 
@@ -90,6 +94,36 @@ class BehaviorInterface:
 
         # Return the result
         return future.result()
+    
+def read_waypoints(site: str):
+    """! Function that generates a waypoints to test the planner server.
+    @return "str" name of the frame for the path.
+    @return "List[PoseStamped]" list of PoseStamped elements with the goal
+        waypoints.
+    @return "PoseStamped" PoseStamped element with the start of the path
+    @return "str" name of the used path planner.
+    @return "bool" if set to False, use robot's current pose as path start.
+    """
+
+    frame_id = "map"
+
+    with open("/workspace/rover/ros2/src/tb_bringup/config/waypoints.yaml") as f:
+        waypoints = yaml.safe_load(f)
+        waypoints = waypoints["waypoints"]
+
+    pose = PoseStamped()
+
+    # Define goal pose
+    pose.pose.position.x = waypoints[site]["pose"]["x"]
+    pose.pose.position.y = waypoints[site]["pose"]["y"]
+
+    spin_angle = 0.0
+
+    track_name = waypoints[site]["track"]
+
+    wait_time = waypoints[site]["wait_time"]
+
+    return pose, spin_angle, track_name, wait_time
 
 def test_behavior_server(args=None):
     
