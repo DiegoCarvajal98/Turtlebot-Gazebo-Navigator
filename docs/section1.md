@@ -152,10 +152,21 @@ You will be working in the [`behavior_interface.py`](../rover/ros2/src/low_level
 ### [5%] Conceptual Questions
 Please solve the following questions:
 1. [1.0%] *What is the main reason the behavior server exists in Nav2?*
+    
+    The behavior server exists to implement recovery behaviors and custom behaviors
 1. [1.0%] *Is playing an alert sound valid as a behavior within the context of the behavior server?*
+
+    It is a valid behavior
 1. [1.0%] *What is the purpose of the `assisted teleop` behavior?*
+
+    The assisted teleop behavior filters teleop twist commands to avoid collisions while doing a teleoperation task
 1. [1.0%] *Which situation might trigger a `Clear Costmap` behavior?* ...
+
+    A situation where wrong readings from the lidar create high costmap values that doesn't let the robot move,
+    the clear costmap behavior would take those false obstacles.
 1. [1.0%] *Within the context of Nav2, what does it mean that each behavior has its own API?*
+
+    
 
 ## Custom behavior tree (40% + 25% Extra)
 In this section you will be using the interfaces from the last three (3) parts to make the robot autonomously navigate. The robot will be required to navigate to three points, which are defined in the [`waypoints.yaml`](../rover/ros2/src/tb_bringup/config/waypoints.yaml) file. The robot should navigate to the restaurant, then to the customer, and finally to the parking. On each waypoint, the robot will be required to rotate, and wait. Additionally, the robot will play a sound on each waypoint. All of these actions will be built in the [behavior_tree.py](../rover/ros2/src/low_level_pkg/low_level_pkg/behavior_tree.py) file. The implementation of this part is worth 40% plus an extra 25%.
