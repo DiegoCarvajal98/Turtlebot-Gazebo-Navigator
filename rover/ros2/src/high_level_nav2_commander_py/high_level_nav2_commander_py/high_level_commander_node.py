@@ -5,6 +5,7 @@ from rclpy.action import ActionClient
 
 # Import ROS interfaces
 from nav2_msgs.action import NavigateToPose
+from std_msgs.msg import String, Bool
 
 import ament_index_python
 
@@ -15,6 +16,9 @@ class Nav2CommanderNode(Node):
         Node.__init__(self, node_name=node_name)
         self.get_logger().info("Hi! I'm the nav2 commander node!")
         self.navigate_action_client = ActionClient(self, NavigateToPose, "navigate_to_pose")
+        self.audio_publisher = self.create_publisher(String, "device/speaker/command", 10)
+        self.create_subscription(Bool, "navigation/start", self.navigation_start_callback)
+        self.create_subscription(Bool, "navigation/stop", self.navigation_stop_callback)
 
     def read_waypoints(self, pkg: str, folder: str):
         """! Function to read the waypoints from a yaml file
