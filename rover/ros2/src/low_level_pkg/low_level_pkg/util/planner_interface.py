@@ -27,14 +27,17 @@ class PlannerInterface:
         self.logger = parent_node.get_logger()
         self.planner_server_client = ActionClient(parent_node, ComputePathToPose, "compute_path_to_pose")
 
-    def call_action_client(self, frame_id: str, goal: PoseStamped, start: PoseStamped, planner_id: str, use_start: bool):
+    def call_action_client(self, frame_id: str, goal: PoseStamped, 
+                    start: PoseStamped, planner_id: str, use_start: bool):
         """! Call the planner server action to calculate a path.
 
-        @param goals "List[PoseStamped]" list of PoseStamped elements to plan the path
-        @param start "PoseStamped" PoseStamped element that defines the start of the path
+        @param goals "List[PoseStamped]" list of PoseStamped elements to plan 
+            the path
+        @param start "PoseStamped" PoseStamped element that defines the start 
+            of the path
         @param planner_id "str" Planner to be used
-        @param use_start "bool" If set to False, start from the actual position of the robot,
-            else, start from the start param pose
+        @param use_start "bool" If set to False, start from the actual position 
+            of the robot, else, start from the start param pose
 
         """
         # Check if controller server is not available
@@ -73,13 +76,15 @@ class PlannerInterface:
         if not future.result().accepted:
             self.logger.error("The planner server goal was rejected by server!")
             return
+        else:
+            self.logger.info("Path goal accepted")
 
         # Return the action result
         future = future.result().get_result_async()
 
         # Wait until the future completes
         rclpy.spin_until_future_complete(self.node, future)
-
+        self.logger.info("Path action result provided")
         # Return the action result
         return future.result()
 
@@ -137,6 +142,7 @@ def test_planner_server(args=None):
     # Call the action client with the path
     result = planner_server_interface.call_action_client(frame_id, goals, start, planner_id, use_start)
 
+    print("Goal frame_id: %s" % result.result.path.header.frame_id)
     # Kill them all
     rclpy.shutdown()
 

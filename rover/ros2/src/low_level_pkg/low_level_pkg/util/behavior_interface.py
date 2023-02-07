@@ -32,10 +32,11 @@ class BehaviorInterface:
         self.logger = parent_node.get_logger()
         self.spin_server_client = ActionClient(parent_node, Spin, "spin")
         self.wait_server_client = ActionClient(parent_node, Wait, "wait")
-        self.controller_server_client = ActionClient(parent_node, FollowPath, 'follow_path')
         self.planner_server_client = ActionClient(parent_node, ComputePathToPose, "compute_path_to_pose")
+        self.controller_server_client = ActionClient(parent_node, FollowPath, 'follow_path')
         self.audio_publisher = self.node.create_publisher(String, "/device/speaker/command", 10)
         self.start_navigation_server = self.node.create_service(Trigger, "start_navigation", self.start_navigation_callback)
+
 
     def call_spin_action_client(self, target_yaw: float, time_allowance: Duration):
         """! Call the Spin behavior server client
@@ -70,6 +71,7 @@ class BehaviorInterface:
 
         # Return the result
         return future.result()
+    
 
     def call_wait_action_client(self, time: Duration):
         """! Call the Wait behavior server client
@@ -101,6 +103,7 @@ class BehaviorInterface:
 
         # Return the result
         return future.result()
+    
     
     def call_control_action_client(self, path: Path, controller_id: str, goal_checker_id: str):
         """! Call the controller server action to follow a given path.
@@ -142,14 +145,18 @@ class BehaviorInterface:
         # Return the result
         return future.result()
     
-    def call_plan_action_client(self, goal: PoseStamped, start: PoseStamped, planner_id: str, use_start: bool):
+    
+    def call_plan_action_client(self, goal: PoseStamped, start: PoseStamped, 
+                                planner_id: str, use_start: bool):
         """! Call the planner server action to calculate a path.
 
-        @param goals "List[PoseStamped]" list of PoseStamped elements to plan the path
-        @param start "PoseStamped" PoseStamped element that defines the start of the path
+        @param goals "List[PoseStamped]" list of PoseStamped elements to plan 
+            the path
+        @param start "PoseStamped" PoseStamped element that defines the start 
+            of the path
         @param planner_id "str" Planner to be used
-        @param use_start "bool" If set to False, start from the actual position of the robot,
-            else, start from the start param pose
+        @param use_start "bool" If set to False, start from the actual position 
+            of the robot, else, start from the start param pose
 
         """
         # Check if controller server is not available
@@ -157,14 +164,19 @@ class BehaviorInterface:
             self.logger.error("Planner server is not available!")
             return
 
+        frame_id = "map"
+
         # Goal definition
         action_goal = ComputePathToPose.Goal()
 
         action_goal.goal = goal
-
-        # self.node.get_logger().info("%f, %f" % (goal.pose.position.x, goal.pose.position.y))
+        action_goal.goal.header.frame_id = frame_id
+        action_goal.goal.header.stamp = self.node.get_clock().now().to_msg()
 
         action_goal.start = start
+
+        action_goal.start.header.stamp = self.node.get_clock().now().to_msg()
+        action_goal.start.header.frame_id = frame_id
 
         # self.node.get_logger().info("%f, %f" % (start.pose.position.x, start.pose.position.y))
 
@@ -173,6 +185,7 @@ class BehaviorInterface:
         action_goal.use_start = use_start
 
         # Send the goal to the server
+        self.node.get_logger().info("Sending path goal")
         future = self.planner_server_client.send_goal_async(action_goal)
 
         # Wait until the future completes
@@ -182,6 +195,8 @@ class BehaviorInterface:
         if not future.result().accepted:
             self.logger.error("The planner server goal was rejected by server!")
             return
+        else:
+            self.logger.info("Path goal accepted")
 
         # Return the action result
         future = future.result().get_result_async()
@@ -189,8 +204,10 @@ class BehaviorInterface:
         # Wait until the future completes
         rclpy.spin_until_future_complete(self.node, future)
 
+        self.logger.info("Result from path goal")
         # Return the action result
         return future.result()
+    
     
     def start_navigation_callback(self, req, resp):
         sites = ["restaurant", "customer", "parking"]
@@ -199,41 +216,41 @@ class BehaviorInterface:
             goal, spin_angle, track_name, wait_time = self.read_waypoints(i)
 
             #Compute path to restaurant
-            goal.header.frame_id = "map"
-            goal.header.stamp = self.node.get_clock().now().to_msg()
             start = PoseStamped()
-            planner_id = "GridBased"
+            planner_id = ""
             use_start = False
 
+            self.logger.info("Planning path")
             result = self.call_plan_action_client(goal, start, planner_id, use_start)
 
             # Execute path to restaurant
-            path = result().result.path
+            path = result.result.path
             controller_id = "FollowPath"
             goal_checker = "goal_checker"
 
             result = self.call_control_action_client(path, controller_id, goal_checker)
 
             # Publish audio
+            self.logger.info("Sound for: %s" % i)
             audio_msg = String()
             audio_msg.data = track_name
             self.audio_publisher.publish(audio_msg)
 
             # Wait
+            self.logger.info("Wait %d seconds" % wait_time)
             time = Duration
             time.sec = int(wait_time)
             self.call_wait_action_client(time)
 
         return resp
     
+    
     def read_waypoints(self, site: str):
-        """! Function that generates a waypoints to test the planner server.
-        @return "str" name of the frame for the path.
-        @return "List[PoseStamped]" list of PoseStamped elements with the goal
-            waypoints.
-        @return "PoseStamped" PoseStamped element with the start of the path
-        @return "str" name of the used path planner.
-        @return "bool" if set to False, use robot's current pose as path start.
+        """! Function that generates a waypoints from the yaml file.
+        @return "str" Waypoint pose.
+        @return "float" Spin angle.
+        @return "str" Name of the audio track.
+        @return "int" Wait time.
         """
 
         with open("/workspace/rover/ros2/src/tb_bringup/config/waypoints.yaml") as f:
@@ -253,6 +270,7 @@ class BehaviorInterface:
         wait_time = waypoints[site]["wait_time"]
 
         return pose, spin_angle, track_name, wait_time
+    
 
 def test_behavior_server(args=None):
     
@@ -284,6 +302,7 @@ def test_behavior_server(args=None):
 
     # Kill them all
     rclpy.shutdown()
+
 
 def main(args=None):
     rclpy.init(args=args)
