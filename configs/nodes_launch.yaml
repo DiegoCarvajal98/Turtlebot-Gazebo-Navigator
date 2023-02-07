@@ -24,7 +24,7 @@ NODE_HIGH_LEVEL_COMMANDER_CPP:
   respawn: true
   respawn_delay: 5.0
 NODE_HIGH_LEVEL_COMMANDER_PY:
-  launch: 0
+  launch: 1
   node_executable: high_level_commander_node
   package: high_level_nav2_commander_py
   respawn: true
