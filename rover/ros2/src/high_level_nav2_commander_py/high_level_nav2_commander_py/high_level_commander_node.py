@@ -14,7 +14,7 @@ class Nav2CommanderNode(Node):
     def __init__(self, node_name):
         Node.__init__(self, node_name=node_name)
         self.get_logger().info("Hi! I'm the nav2 commander node!")
-        
+        self.navigate_action_client = ActionClient(self, NavigateToPose, "navigate_to_pose")
 
     def read_waypoints(self, pkg: str, folder: str):
         """! Function to read the waypoints from a yaml file
