@@ -56,20 +56,41 @@ Before answering the questions take some time to read [how behavior trees work i
 
 If you didn't read the [document on executors and callback groups](https://discourse.ros.org/t/how-to-use-callback-groups-in-ros2/25255) do it now to answer yes or no the following questions. Imagine you have a node that subscribes to two different topics, then
 
-1. [1%] _Can the two callbacks run simultaneously if the node is spun by a SingleThreadedExecutor?_
-1. [1%] _Can the two callbacks run simultaneously if the node is spun by a SingleThreadedExecutor but they belong to the same MutuallyExclusiveCallbackGroup?_
-1. [1%] _Can the two callbacks run simultaneously if the node is spun by a SingleThreadedExecutor but they belong to different MutuallyExclusiveCallbackGroups?_
-1. [1%] _Can the two callbacks run simultaneously if the node is spun by a SingleThreadedExecutor but they belong to the same ReentrantCallbackGroup?_
-1. [1%] _Can the two callbacks run simultaneously if the node is spun by a MultiThreadedExecutor?_
-1. [1%] _Can the two callbacks run simultaneously if the node is spun by a MultiThreadedExecutor but they belong to the same MutuallyExclusiveCallbackGroup?_
-1. [1%] _Can the two callbacks run simultaneously if the node is spun by a MultiThreadedExecutor but they belong to different MutuallyExclusiveCallbackGroups?_
-1. [1%] _Can the two callbacks run simultaneously if the node is spun by a MultiThreadedExecutor but they belong to the same ReentrantCallbackGroup?_
+1. [1%] _Can the two callbacks run simultaneously if the node is spun by a SingleThreadedExecutor?_ \
+    No
+1. [1%] _Can the two callbacks run simultaneously if the node is spun by a SingleThreadedExecutor but they belong to the same MutuallyExclusiveCallbackGroup?_ \
+    No
+1. [1%] _Can the two callbacks run simultaneously if the node is spun by a SingleThreadedExecutor but they belong to different MutuallyExclusiveCallbackGroups?_ \
+    No
+1. [1%] _Can the two callbacks run simultaneously if the node is spun by a SingleThreadedExecutor but they belong to the same ReentrantCallbackGroup?_ \
+    No
+1. [1%] _Can the two callbacks run simultaneously if the node is spun by a MultiThreadedExecutor?_ \
+    Yes
+1. [1%] _Can the two callbacks run simultaneously if the node is spun by a MultiThreadedExecutor but they belong to the same MutuallyExclusiveCallbackGroup?_ \
+    No
+1. [1%] _Can the two callbacks run simultaneously if the node is spun by a MultiThreadedExecutor but they belong to different MutuallyExclusiveCallbackGroups?_ \
+    Yes
+1. [1%] _Can the two callbacks run simultaneously if the node is spun by a MultiThreadedExecutor but they belong to the same ReentrantCallbackGroup?_ \
+    Yes
 
 One final round on nav2's general concepts. You may read it's [documentation](https://navigation.ros.org/concepts/index.html) if you haven't by now. You may also find it useful to read [REP105](https://www.ros.org/reps/rep-0105.html).
 
 1. [3%]_What's the purpose of the [nav2_params.yaml](../rover/ros2/src/tb_bringup/params/nav2_params.yaml) file?_
 1. [5% - EXTRA]_What's the task of amcl? Why does't the BT interact with it while it does with most other servers?_
-1. [5%]_What reference frames in REP105 are needed for nav2 to work? which of those is attached to the robot_
+1. [5%]_What reference frames in REP105 are needed for nav2 to work? which of those is attached to the robot_ \
+    The frames needed for nav2 are:
+    * map
+    * odom
+    * base_link
+    * [sensor_frames]
+
+    Where `base_link` and `[sensor_frames]` are the frames attached to the robot
 1. [5% - EXTRA]_Why do you think we have `map` and `odom` instead of a single frame?_
-1. [5%]_Why do you think nav2 needs two costmaps instead of just one?_
-1. [5% - EXTRA]_What's a costmap layer? what do we mean when we say nav2 costmaps are layered? Which kind of costmap layer would you use to populate the costmap with data coming from a 2D lidar?_
+1. [5%]_Why do you think nav2 needs two costmaps instead of just one?_\
+    Because one of them have information from the global map for path planning while the oder have information about the local environment to the robot and is used to detect obstacles
+1. [5% - EXTRA]_What's a costmap layer? what do we mean when we say nav2 costmaps are layered? Which kind of costmap layer would you use to populate the costmap with data coming from a 2D lidar?_ \
+    A costmap layer is the representation of the environment to the robot and is used for global planning or local efforts computation. 
+
+    Costmaps in nav2 are layered because they can be used to change underlying costmaps, like for example save information about an obstacle that is not on an underlying costmap. 
+
+    If the Lidar is 2D, the 2D Grid costmap can be used.

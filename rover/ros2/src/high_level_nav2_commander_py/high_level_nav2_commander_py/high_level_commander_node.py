@@ -36,6 +36,20 @@ class Nav2CommanderNode(Node):
 
         return waypoints
     
+    def goal_callback(self, future):
+        goal_handle = future.result()
+
+        if not goal_handle.accepted:
+            self.logger.info("Goal rejected")
+        else:
+            self.logger.info("Goal accepted")
+
+        self._get_result_future = goal_handle.get_result_async()
+        self._get_result_future.add_done_callback(self.result_callback)
+
+    def result_callback(self, future):
+        result = future.result()
+    
     def navigation_feedback_callback(self, feedback):
         time_remaining = feedback.estimated_time_remaining.sec
 
