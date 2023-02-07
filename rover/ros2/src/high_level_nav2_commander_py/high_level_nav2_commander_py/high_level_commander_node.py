@@ -14,6 +14,7 @@ import yaml
 class Nav2CommanderNode(Node):
     def __init__(self, node_name):
         Node.__init__(self, node_name=node_name)
+        self.logger = self.get_logger()
         self.get_logger().info("Hi! I'm the nav2 commander node!")
         self.navigate_action_client = ActionClient(self, NavigateToPose, "navigate_to_pose")
         self.audio_publisher = self.create_publisher(String, "device/speaker/command", 10)
@@ -34,6 +35,11 @@ class Nav2CommanderNode(Node):
             waypoints = yaml.safe_load(f)["waypoints"]
 
         return waypoints
+    
+    def navigation_feedback_callback(self, feedback):
+        time_remaining = feedback.estimated_time_remaining.sec
+
+        self.logger.info("The estimated time remaining is: %d s" % time_remaining)
 
 def main():
     rclpy.init()
